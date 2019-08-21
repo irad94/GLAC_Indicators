@@ -40,7 +40,6 @@ read_NTBSA <- function(ttt){
            value = 1) 
 }
 
-
 #Lectura de lotes----
 Isos_eu <- read.csv("Z:/INDICADORES/Bases/USDA/ISOS.EEUU.States.csv")
 
@@ -61,24 +60,6 @@ group_by(Y,year) %>%
   summarise(value = sum(value, na.rm = T)) %>% cast(Y~year) %>% 
   write.csv(.,"C:/Users/GLAC/Documents/BASES DE DATOS/NTSB/Accidents/Lotes/Lote_Estatal_EEUU_Accidentes aéreos.csv",
             na="", row.names = F)
-
-
-#Por categorías----
-
-constrl <- function(categ, value = "value", name){
-  
-  catalog <- unique(df$categ)
-  
-  for (i in seq_along(catalog)){
-    
-    filter(df, categ == catalog[i]) %>% 
-      group_by(Y,year) %>% 
-      summarise(value = sum(value, na.rm = T)) %>% cast(Y~year) %>% 
-      write.csv(paste0("C:/Users/GLAC/Documents/BASES DE DATOS/NTSB/Accidents/Lotes/Lote_Estatal_EEUU_Accidentes aéreos_", name,"_",catalog[i],".csv"),
-                na="", row.names = F)
-  
-  }
-}
 
 
 #Por cantidad y tipo de lesionados
