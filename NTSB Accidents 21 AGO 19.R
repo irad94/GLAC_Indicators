@@ -89,6 +89,7 @@ for (i in seq_along(catalog)){
 }
 
 
+
 #Por tipo de daño y cantidad de lesionados
 
 catalog <- unique(df$damage)
