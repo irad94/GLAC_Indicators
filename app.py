@@ -1,13 +1,14 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import plotly.graph_objs as go
 from numpy import arange, array, ones
 import numpy as np
 from scipy import stats
 import plotly.io as pio
 import pandas as pd
+import json
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -21,6 +22,9 @@ df = df.select_dtypes(include=np.number)\
 available_indicators = df.columns
 
 app.layout = html.Div([
+
+    html.H1("Plataforma de análisis"),
+
     html.Div([
 
         html.Div([
@@ -41,20 +45,29 @@ app.layout = html.Div([
         ], style={'width': '48%', 'float': 'right', 'display': 'inline-block'})
     ]),
 
-    dcc.Graph(id='indicator-graphic')
+    dcc.Graph(id='indicator-graphic'),
+    html.P(""),
+    html.P("Introduzca el nombre del eje de las ordenadas"),
+    dcc.Input(id='input-1-state', type='text', value='FGF21_OFICIAL', size='50'),
+    html.P("Introduzca el nombre del eje de las abscisas"),
+    dcc.Input(id='input-2-state', type='text', value='ACTANTIOX_OFICIAL', size='50'),
+    html.Hr(style={'width': '35%', 'margin': '0', 'margin-top': '15px', 'margin-bottom': '15px'}),
+    html.Button(id='btn-1', children='ACTUALIZAR EJES')
 ])
 
 
 @app.callback(
     Output('indicator-graphic', 'figure'),
-    [Input('xaxis-column', 'value'),
-     Input('yaxis-column', 'value')])
-def update_graph(xaxis_column_name, yaxis_column_name):
+    [Input('btn-1', 'n_clicks'),
+     Input('xaxis-column', 'value'),
+     Input('yaxis-column', 'value')],
+     [State('input-1-state', 'value'),
+     State('input-2-state', 'value')])
+def update_graph(n_clicks1, xaxis_column_name, yaxis_column_name, input_1, input_2):
     dff = df.dropna(subset=[xaxis_column_name, yaxis_column_name])
     # Construcción del modelo
     slope, intercept, r_value, p_value, std_err = stats.linregress(dff[xaxis_column_name], dff[yaxis_column_name])
     line = slope * dff[xaxis_column_name] + intercept
-
     return {
         'data': [dict(
             x=dff[xaxis_column_name],
@@ -76,10 +89,10 @@ def update_graph(xaxis_column_name, yaxis_column_name):
             hoverinfo="x+y+text")],
         'layout': dict(
             xaxis={
-                'title': xaxis_column_name
+                'title': input_2
             },
             yaxis={
-                'title': yaxis_column_name
+                'title': input_1
             },
             margin={'l': 60, 'b': 40, 't': 10, 'r': 10},
             hovermode='closest',
@@ -101,6 +114,7 @@ def update_graph(xaxis_column_name, yaxis_column_name):
             showlegend=False
         )
     }
+
 
 
 if __name__ == '__main__':
