@@ -1,0 +1,89 @@
+---
+title: "Análisis de regresión"
+output:
+  word_document:
+    reference_docx: word-styles-reference-01.docx
+date: "`r format(Sys.Date(), '%A, %B %d, %Y')`"
+params:
+  gtitle:
+    input: text
+    label: Título de la gráfica
+    value: Gráfico de dispersión (regresión lineal)
+  dep:
+    input: text
+    label: Variable dependiente
+    value: FGF21_OFICIAL
+  indep:
+    input: text
+    label: Variable independiente
+    value: ACTANTIOX_OFICIAL
+  yunit:
+    input: text
+    label: Unidad del eje Y
+    value: FGF21 in ng/dL
+  xunit:
+    input: text
+    label: Unidad del eje X
+    value: Plasma antioxidant total capacity in microM/Trolox Eq.
+  base:
+    input: text
+    label: Base de datos
+    value: "C:/Users/IOR_C/Downloads/Base de datos FGF21 final.sav"
+  outgraph:
+    input: text
+    label: Carpeta para guardar imágen
+    value: "~/v_analisis/Imagen/"
+---
+
+```{r setup, include=FALSE}
+#define knitr options
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(dpi = 1000)
+#Set anu missing NAs in tables to blank
+options(knitr.kable.NA="")
+
+library(tidyverse)
+library(ggpubr)
+library(ggpmisc)
+library(hrbrthemes)
+library(haven)
+library(kableExtra)
+library(stargazer)
+
+df <- read_sav(params$base)
+
+```
+
+
+```{r}
+
+ggp <- ggplot(df, aes_string(x= params$indep, y= params$dep))+
+  geom_point(alpha = 0.3, color = "black") +
+  geom_line(stat='smooth', method = "lm", size =1, color = "black")+
+  labs(title = params$gtitle,
+       y = params$yunit,
+       x = params$xunit)+
+  theme_classic()+
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               label.x.npc = "right", label.y.npc = 0.8,
+               formula = y ~ x, parse = TRUE, size = 3, color = "black")+
+  theme(plot.title = element_text(vjust=-2.5, size = 12, hjust = 0.5, 
+                                  color = "#666666", face = "bold", 
+                                  margin = margin(b=1, unit = "cm")))
+  
+
+ggsave(paste0(params$dep,"_",params$indep,".png"), plot = ggp, 
+       path = params$outgraph, dpi = 320, device = "png", width = 15, height = 10, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+```{r}
+fit <- lm(as.formula(paste0(params$dep,'~',params$indep)), data = df)
+stargazer(fit, title="Resultados de la regresión lineal", align=TRUE, type = "text")
+```
+
+

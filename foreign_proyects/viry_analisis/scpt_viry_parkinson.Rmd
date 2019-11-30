@@ -1,0 +1,359 @@
+---
+title: "Análisis exploratorio parkinson"
+output:
+  word_document:
+    reference_docx: word-styles-reference-01.docx
+date: "`r format(Sys.Date(), '%A, %B %d, %Y')`"
+---
+
+```{r setup, include=FALSE}
+#define knitr options
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(dpi = 1000)
+#Set anu missing NAs in tables to blank
+options(knitr.kable.NA="")
+
+library(tidyverse)
+library(ggpubr)
+library(ggpmisc)
+library(hrbrthemes)
+library(haven)
+library(kableExtra)
+library(stargazer)
+library(gridExtra)
+
+#Funciones de gráficas
+
+bgraph <- function(dfa, group = 'entidad', title, subtitle, caption, colors = c("#33658A","#55DDE0")){
+  
+  ggplot(dfa) +
+    geom_bar(aes_string(x='year', y='t_value', fill = group, group = group), stat="identity", position = "dodge",alpha=0.7)+
+  labs(title = title,
+       subtitle=subtitle,
+       caption=caption, 
+       y="",
+       x="",
+       color=NULL) +
+  theme_classic()+
+  theme(axis.line.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank(),
+        plot.caption = element_text(hjust = 0),
+        plot.title = element_text(vjust=-2.5, size = 12.5, hjust = 0.5, color = "#666666", face = "bold"),
+        plot.subtitle = element_text(vjust=-2.5, size = 10, hjust = 0.5, color = "#666666", face = "italic"))+
+  geom_text(aes(x=year, y=t_value, label = paste0(t_value,"\n(",value," casos",")"), 
+                group=entidad), size = 2.3, position = position_dodge(0.9),
+            vjust = -0.3, hjust = 0.5, fontface="bold", color = "#333333")+
+  scale_y_continuous(limits = c(0,1.1*(max(dfa$t_value))))+
+  scale_fill_manual("",values = colors)
+  
+}
+
+hgraph <- function(dfa, title = '', subtitle = "", color = c("#55DDE0","#FF6699")){
+  
+  ggp <- ggplot(dfa) +
+    geom_bar(aes_string(x='age_group', y='t_value', fill = 'gender', group = 'gender'), 
+             stat="identity", position = "stack",alpha=0.9)+
+  labs(title =title,
+       subtitle=subtitle,
+       caption='Fuente: Dirección General de Epidemiología, Anuario de Morbilidad', 
+       y="casos por cada 100 mil habitantes (considerando cada grupo de edad y género)",
+       x="grupos de edad",
+       color=NULL) +
+ theme_ipsum()+
+  theme(axis.text.x = element_text(size = 7.5), 
+        axis.title.y = element_text(size = 7.5, hjust = 0.5, margin = margin(r=0.5,unit = "cm")),
+        axis.title.x = element_text(size = 7.5, hjust = 0.5, margin = margin(t=0.5,unit = "cm")),
+        plot.caption = element_text(hjust = 0),
+        plot.title = element_text(vjust=-2.5, size = 12.5, hjust = 0.5, color = "#666666", face = "bold"),
+        plot.subtitle = element_text(vjust=-2.5, size = 10, hjust = 0.5, color = "#666666", face = "italic"))+
+  scale_y_continuous(limits = c(0,1.1*(max(dfa$t_value))))+
+  scale_fill_manual("",values = color)
+  
+return(ggp)
+  
+}
+
+
+
+df <- read.csv("C:/Users/IOR_C/Dropbox/base_parkinson.csv") %>% 
+  mutate(gender = str_replace_all(gender,"0","Mujeres") %>% str_replace_all("1","Hombres"),
+         age_group = as.character(age_group))
+
+dfp <- read.csv("C:/Users/IOR_C/Documents/databases/population/pob_mit_proyecciones.csv") %>% 
+  rename(entidad = ENTIDAD, year=AÑO, gender = SEXO) %>% 
+  mutate(entidad = str_replace_all(entidad,"República Mexicana", "Total nacional"),
+         age_group = ifelse(EDAD < 1, "< 1", ifelse(between(EDAD,1,4),"1 - 4",ifelse(between(EDAD,5,9),"5 - 9",
+                      ifelse(between(EDAD,10,14),"10 - 14",ifelse(between(EDAD,15,19),"15 - 19",
+                        ifelse(between(EDAD,20,24),"20 - 24", ifelse(between(EDAD,25,44),"25 - 44",
+                          ifelse(between(EDAD,45,49),"45 - 49",ifelse(between(EDAD,50,59),"50 - 59",
+                            ifelse(between(EDAD,60,64),"60 - 64", ifelse(EDAD >= 65,"65 y +",NA))))))))))))
+
+dfpt <- dfp %>% group_by(year, entidad) %>% summarise(pob = sum(POBLACION, na.rm = T))
+dfpt_fem <- dfp %>% filter(gender == 'Mujeres') %>%  group_by(year, entidad) %>% 
+  summarise(pob = sum(POBLACION, na.rm = T))
+dfpt_mas <- dfp %>% filter(gender == 'Hombres') %>% group_by(year, entidad) %>% 
+  summarise(pob = sum(POBLACION, na.rm = T))
+```
+
+## Comparativo entre la incidencia de parkinson en México y el estado de Zacatecas
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=8.5}
+
+dfa <- df %>% filter(entidad %in% c("Total nacional", "Zacatecas"), gender == "total", age_group == "Total") %>% 
+  left_join(dfpt, by=c('year', "entidad")) %>% mutate(t_value = (value/pob*100000) %>% round(2))
+
+ggp <- bgraph(dfa, group = 'entidad', title = "Propoción de incidencia de parkinson entre Zacatecas y México",
+              subtitle = "Comparativo entre tasas por cada 100 mil habitantes",
+              caption = "Fuente: Dirección General de Epidemiología, Anuario de Morbilidad",
+              colors = c("#000033","#999999"))
+
+ggsave("comparativo_mex_zac_parkinson.jpeg", plot = ggp, 
+           path = "C:/Users/IOR_C/Documents/foreign_proyects/viry_analisis/imagen", 
+           dpi = 320, device = "jpeg", width = 24, height = 15, units = "cm", bg = "white")
+
+print(ggp)
+```
+
+## Comparativo entre la incidencia de parkinson en México y el estado de Zacatecas, desgregado por género
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=8.5}
+dff <- df %>% filter(entidad %in% c("Total nacional", "Zacatecas"), gender == "Mujeres", age_group == "Total") %>% 
+  left_join(dfpt_fem, by=c('year', "entidad")) %>% mutate(t_value = (value/pob*100000) %>% round(2))
+
+dfm <- df %>% filter(entidad %in% c("Total nacional", "Zacatecas"), gender == "Hombres", age_group == "Total") %>% 
+  left_join(dfpt_mas, by=c('year', "entidad")) %>% mutate(t_value = (value/pob*100000) %>% round(2))
+
+dfa <- rbind(dff,dfm)
+rm(dff,dfm)
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6.3, fig.width=8.5}
+ggp <- ggplot(dfa) + 
+  geom_bar(aes(fill = interaction(entidad,gender), y = t_value, x = gender, group = entidad), 
+           position  = 'stack', stat = 'identity', width = 0.9)+
+  scale_fill_manual("", labels = c("Total nacional: Hombres", "Zacatecas: Hombres",
+                                   "Total nacional: Mujeres", 'Zacatecas: Mujeres'),
+                      values = c("#33658A","#55DDE0","#CC3399","#FF6699"))+
+  geom_text(position = position_stack(vjust = .5),
+            aes(x=gender, y=t_value, label = paste0(t_value,"\n(",value," casos",")"),group=entidad), 
+            size = 2.4, fontface="bold", color = "#333333")+ 
+  facet_wrap(~year, nrow = 1)+
+  theme_classic()+
+  labs(title = "Distribución de casos de parkinson en Zacatecas y México (país) por género y año",
+       subtitle="Comparativo de tasas por cada 100 mil habitantes (de acuerdo a los respectivos géneros)",
+       caption='Fuente: Dirección General de Epidemiología, Anuario de Morbilidad', 
+       y="",
+       x="",
+       color=NULL)+
+  theme(axis.line.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank(),
+        plot.caption = element_text(hjust = 0),
+        plot.title = element_text(vjust=-2.5, size = 12.5, hjust = 0.5, color = "#666666", face = "bold"),
+        plot.subtitle = element_text(vjust=-2.5, size = 10, hjust = 0.5, color = "#666666", face = "italic",
+                                     margin = margin(b=1, unit = "cm")),
+        strip.background = element_blank(),
+        legend.position = "bottom")+
+  annotate("segment",x=Inf,xend=-Inf,y=Inf,yend=Inf,color="black",lwd=1)
+
+ggsave("comparativo_mex_zac_parkinson_gender.jpeg", plot = ggp, 
+           path = "C:/Users/IOR_C/Documents/foreign_proyects/viry_analisis/imagen", 
+           dpi = 320, device = "jpeg", width = 24, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+```
+
+## Comparativo entre la incidencia de parkinson en México y el estado de Zacatecas, desgregado por estrato de edad
+
+```{r}
+dfpt <- dfp %>% group_by(year, entidad, age_group) %>% summarise(pob = sum(POBLACION, na.rm = T))
+
+dfa <- df %>% filter(entidad %in% c("Total nacional", "Zacatecas"), gender == "total", year == 2018) %>% 
+    left_join(dfpt, by=c('year', "entidad", 'age_group')) %>% drop_na("pob") %>% 
+  mutate(t_value = (value/pob*100000) %>% round(2),
+         age_group = factor(age_group, levels = c("< 1","1 - 4","5 - 9","10 - 14", "15 - 19", "20 - 24", "25 - 44",
+                                                  "45 - 49", "50 - 59", "60 - 64", "65 y +")))
+
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE, fig.height=6.3, fig.width=9}
+ggp <- ggplot(dfa) +
+    geom_bar(aes_string(x='age_group', y='t_value', fill = 'entidad', group = 'entidad'), 
+             stat="identity", position = "stack",alpha=0.7)+
+  labs(title ='Distribución de casos de parkinson en Zacatecas y México (país)',
+       subtitle='Comparativo de incidencia por rango edad en 2018',
+       caption='Fuente: Dirección General de Epidemiología, Anuario de Morbilidad', 
+       y="casos por cada 100 mil habitantes (considerando cada grupo de edad)",
+       x="grupos de edad",
+       color=NULL) +
+ theme_ipsum()+
+  theme(axis.text.x = element_text(size = 7.5), 
+        axis.title.y = element_text(size = 7.5, hjust = 0.5, margin = margin(r=0.5,unit = "cm")),
+        axis.title.x = element_text(size = 7.5, hjust = 0.5, margin = margin(t=0.5,unit = "cm")),
+        plot.caption = element_text(hjust = 0),
+        plot.title = element_text(vjust=-2.5, size = 12.5, hjust = 0.5, color = "#666666", face = "bold"),
+        plot.subtitle = element_text(vjust=-2.5, size = 10, hjust = 0.5, color = "#666666", face = "italic"))+
+  scale_y_continuous(limits = c(0,1.1*(max(dfa$t_value))))+
+  scale_fill_manual("",values = c("#000033","#999999"))
+
+
+ggsave("comparativo_mex_zac_parkinson_edades.jpeg", plot = ggp, 
+           path = "C:/Users/IOR_C/Documents/foreign_proyects/viry_analisis/imagen", 
+           dpi = 320, device = "jpeg", width = 24, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+
+```
+
+## Comparativo entre la incidencia de parkinson en el estado de Zacatecas, desgregado por estrato de edad y género (2018)
+
+```{r}
+
+dfpt_fem <- dfp %>% filter(gender == 'Mujeres') %>%  group_by(year, entidad, age_group) %>% 
+  summarise(pob = sum(POBLACION, na.rm = T))
+
+dfpt_mas <- dfp %>% filter(gender == 'Hombres') %>% group_by(year, entidad, age_group) %>% 
+  summarise(pob = sum(POBLACION, na.rm = T))
+
+dff <- df %>% filter(entidad %in% c("Zacatecas"), gender == "Mujeres") %>% 
+  left_join(dfpt_fem, by=c('year', "entidad", 'age_group')) %>% drop_na("pob") %>% 
+  mutate(t_value = (value/pob*100000) %>% round(2))
+
+dfm <- df %>% filter(entidad %in% c("Zacatecas"), gender == "Hombres") %>% 
+  left_join(dfpt_mas, by=c('year', "entidad", 'age_group')) %>% drop_na("pob") %>%
+  mutate(t_value = (value/pob*100000) %>% round(2))
+
+dfa <- rbind(dff,dfm) %>% filter(year == 2018) %>% 
+  mutate(age_group = factor(age_group, 
+                            levels = c("< 1","1 - 4","5 - 9","10 - 14", "15 - 19",
+                                       "20 - 24", "25 - 44", "45 - 49",
+                                       "50 - 59", "60 - 64", "65 y +")))
+rm(dff,dfm)
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6.3, fig.width=9}
+ggp <- hgraph(dfa, title = 'Distribución de casos de parkinson en Zacatecas',
+              subtitle = 'Comparativo de incidencia por rango edad y género en 2018',
+              color = c("#55DDE0","#FF6699"))
+
+ggsave("comparativo_zac_parkinson_edades_género.jpeg", plot = ggp, 
+           path = "C:/Users/IOR_C/Documents/foreign_proyects/viry_analisis/imagen", 
+           dpi = 320, device = "jpeg", width = 24, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+```
+
+## Comparativo entre la incidencia de parkinson en México, desgregado por estrato de edad y género (2018)
+
+```{r}
+
+dff <- df %>% filter(entidad %in% c("Total nacional"), gender == "Mujeres") %>% 
+  left_join(dfpt_fem, by=c('year', "entidad", 'age_group')) %>% drop_na("pob") %>% 
+  mutate(t_value = (value/pob*100000) %>% round(2))
+
+dfm <- df %>% filter(entidad %in% c("Total nacional"), gender == "Hombres") %>% 
+  left_join(dfpt_mas, by=c('year', "entidad", 'age_group')) %>% drop_na("pob") %>%
+  mutate(t_value = (value/pob*100000) %>% round(2))
+
+dfa <- rbind(dff,dfm) %>% filter(year == 2018) %>% 
+  mutate(age_group = factor(age_group, 
+                            levels = c("< 1","1 - 4","5 - 9","10 - 14", "15 - 19",
+                                       "20 - 24", "25 - 44", "45 - 49",
+                                       "50 - 59", "60 - 64", "65 y +")))
+rm(dff,dfm)
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6.3, fig.width=9}
+ggp <- hgraph(dfa, title = 'Distribución de casos de parkinson en México',
+              subtitle = 'Comparativo de incidencia por rango edad y género en 2018',
+              color = c("#33658A","#CC3399"))
+
+ggsave("comparativo_mex_parkinson_edades_género.jpeg", plot = ggp, 
+           path = "C:/Users/IOR_C/Documents/foreign_proyects/viry_analisis/imagen", 
+           dpi = 320, device = "jpeg", width = 24, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+```
+
+## Análisis de cifras acumuladas (2014 - 2018), total y desagregado por género para México y el estado de Zacatecas
+
+```{r}
+
+rm(dfa)
+
+dff <- df %>% filter(entidad %in% c("Zacatecas"), gender == "Mujeres") %>% 
+  left_join(dfpt_fem, by=c('year', "entidad", 'age_group')) %>% drop_na("pob") %>% 
+  mutate(t_value = (value/pob*100000) %>% round(2))
+
+dfm <- df %>% filter(entidad %in% c("Zacatecas"), gender == "Hombres") %>% 
+  left_join(dfpt_mas, by=c('year', "entidad", 'age_group')) %>% drop_na("pob") %>%
+  mutate(t_value = (value/pob*100000) %>% round(2))
+
+dfaz <- rbind(dff,dfm) %>% group_by(entidad, gender, age_group) %>% 
+  summarise(t_value = mean(t_value, na.rm = T)) %>% 
+  mutate(t_value = na_if(t_value,"NaN"),
+         age_group = factor(age_group, 
+                            levels = c("< 1","1 - 4","5 - 9","10 - 14", "15 - 19",
+                                       "20 - 24", "25 - 44", "45 - 49",
+                                       "50 - 59", "60 - 64", "65 y +")))
+
+
+dff <- df %>% filter(entidad %in% c("Total nacional"), gender == "Mujeres") %>% 
+  left_join(dfpt_fem, by=c('year', "entidad", 'age_group')) %>% drop_na("pob") %>% 
+  mutate(t_value = (value/pob*100000) %>% round(2))
+
+dfm <- df %>% filter(entidad %in% c("Total nacional"), gender == "Hombres") %>% 
+  left_join(dfpt_mas, by=c('year', "entidad", 'age_group')) %>% drop_na("pob") %>%
+  mutate(t_value = (value/pob*100000) %>% round(2))
+
+dfam <- rbind(dff,dfm) %>% group_by(entidad, gender, age_group) %>% 
+  summarise(t_value = mean(t_value, na.rm = T)) %>%
+  mutate(t_value = na_if(t_value,"NaN"),
+         age_group = factor(age_group, 
+                            levels = c("< 1","1 - 4","5 - 9","10 - 14", "15 - 19",
+                                       "20 - 24", "25 - 44", "45 - 49",
+                                       "50 - 59", "60 - 64", "65 y +")))
+rm(dff,dfm)
+
+```
+
+### Zacatecas
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6.3, fig.width=9}
+ggp <- hgraph(dfaz, title = 'Distribución de casos de parkinson en Zacatecas',
+              subtitle = 'Comparativo de incidencia por rango edad y género (tasas promedio 2014 - 2018)',
+              color = c("#55DDE0","#FF6699"))
+
+ggsave("comparativo_zac_parkinson_edades_género_tprom.jpeg", plot = ggp, 
+           path = "C:/Users/IOR_C/Documents/foreign_proyects/viry_analisis/imagen", 
+           dpi = 320, device = "jpeg", width = 24, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+```
+
+### México
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6.3, fig.width=9}
+ggp <- hgraph(dfam, title = 'Distribución de casos de parkinson en México',
+              subtitle = 'Comparativo de incidencia por rango edad y género (tasas promedio 2014 - 2018)',
+              color = c("#33658A","#CC3399"))
+
+ggsave("comparativo_mex_parkinson_edades_género_tprom.jpeg", plot = ggp, 
+           path = "C:/Users/IOR_C/Documents/foreign_proyects/viry_analisis/imagen", 
+           dpi = 320, device = "jpeg", width = 24, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+```
+
+
+
+

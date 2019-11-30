@@ -1,0 +1,117 @@
+---
+title: "Análisis de base de datos"
+output:
+  word_document:
+    reference_docx: word-styles-reference-01.docx
+date: "`r format(Sys.Date(), '%A, %B %d, %Y')`"
+---
+
+```{r config, message=FALSE, warning=FALSE, code=readLines('C:/Users/IOR_C/Documents/foreign_proyects/v_analisis/code/scpt_config_t.R'), include=FALSE}
+
+```
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+df <- read_sav("C:/Users/IOR_C/Downloads/basededatosatorvastatinafenofibratoDRMAGS_ENTREGA.sav")
+```
+
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+
+dft1 <- chisqtable(df,"alcanzometaLDLde70")
+dft2 <- chisqtable(df,"alcanzometaLDLde100")
+dft3 <- chisqtable(df,"alcalzotreintaporcientodereduccion")
+dft4 <- chisqtable(df,"alcalzocincuentaporcientodereduccion")
+
+
+```
+
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE, ft.split=FALSE, include=FALSE}
+
+dft1 %>%
+flextable() %>%
+  set_header_labels(Var1 = "Grupo de tratamiento",
+                    SI = "Alcanzó meta de colesterol LDL de 70 mg/dL",
+                    NO = "No alcanzó meta de colesterol LDL de 70 mg/dL",
+                    p_chi = "p-value",
+                    p_intg = "p Inter-grupo") %>%
+  merge_at(i = 1:3, j = 4, part = "body") %>%
+  font(fontname = "calibri", part = "all") %>% 
+  fontsize(part = "header", size = 12) %>%
+  fontsize(part = "body", size = 11) %>%
+  autofit() %>%
+  theme_box()
+
+
+```
+
+<br>
+
+<br>
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE, ft.split=FALSE}
+
+dft2 %>%
+flextable() %>%
+  set_header_labels(Var1 = "Grupo de tratamiento",
+                    SI = "Alcanzó meta de colesterol LDL de 100 mg/dL",
+                    NO = "No alcanzó meta de colesterol LDL de 100 mg/dL",
+                    p_chi = "p-value",
+                    p_intg = "p Inter-grupo") %>%
+  merge_at(i = 1:3, j = 4, part = "body") %>%
+  font(fontname = "calibri", part = "all") %>% 
+  fontsize(part = "header", size = 12) %>%
+  fontsize(part = "body", size = 11) %>%
+  autofit() %>%
+  theme_box()
+
+
+```
+
+<br>
+
+<br>
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE, ft.split=FALSE}
+
+dft3 %>%
+flextable() %>%
+  set_header_labels(Var1 = "Grupo de tratamiento",
+                    SI = "Alcanzó 30% de reducción de colesterol LDL",
+                    NO = "No alcanzó 30% de reducción de colesterol LDL",
+                    p_chi = "p-value",
+                    p_intg = "p Inter-grupo") %>%
+  merge_at(i = 1:3, j = 4, part = "body") %>%
+  font(fontname = "calibri", part = "all") %>% 
+  fontsize(part = "header", size = 12) %>%
+  fontsize(part = "body", size = 11) %>%
+  autofit() %>%
+  theme_box()
+
+
+```
+
+<br>
+
+<br>
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE, ft.split=FALSE}
+
+dft4 %>%
+flextable() %>%
+  set_header_labels(Var1 = "Grupo de tratamiento",
+                    SI = "Alcanzó 50% de reducción de colesterol LDL",
+                    NO = "No alcanzó 50% de reducción de colesterol LDL",
+                    p_chi = "p-value",
+                    p_intg = "p Inter-grupo") %>%
+  merge_at(i = 1:3, j = 4, part = "body") %>%
+  font(fontname = "calibri", part = "all") %>% 
+  fontsize(part = "header", size = 12) %>%
+  fontsize(part = "body", size = 11) %>%
+  autofit() %>%
+  theme_box()
+
+
+
+```
+

@@ -1,0 +1,173 @@
+---
+title: "Análisis de base de datos"
+output:
+  word_document:
+    reference_docx: word-styles-reference-01.docx
+date: "`r format(Sys.Date(), '%A, %B %d, %Y')`"
+---
+
+```{r config, message=FALSE, warning=FALSE, code=readLines('C:/Users/IOR_C/Documents/foreign_proyects/v_analisis/code/scpt_config_t.R'), include=FALSE}
+
+```
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+df <- read_sav("C:/Users/IOR_C/Downloads/basededatosatorvastatinafenofibratoDRMAGS_ENTREGA.sav")
+```
+
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+
+variab <- c("alcanzometaLDLde70", "alcanzometaLDLde100",
+            "alcalzotreintaporcientodereduccion", "alcalzocincuentaporcientodereduccion")
+
+
+dft1 <- chisqtable(df,"alcanzometaLDLde100")
+dft2 <- chisqtable(df,"alcanzometaLDLde100")
+dft3 <- chisqtable(df,"alcanzometaLDLde100")
+dft4 <- chisqtable(df,"alcanzometaLDLde100")
+
+
+```
+
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+
+variab <- c("EDAD", "IMCinicial","presionarterialsistolicainicial",
+            "presiondiastolicainicial","presioanarterialmediainicial","colesteroltotalinicialenmgdl",
+            "colesterolNOHDLincialmgdl", "trigliceridosinicialenmgdl","hdlinicialenmgdl","ldlinicialenmgdl",
+            "vldlinicial","apoA1inicial","apoBinicial",colnames(df)[33:39],colnames(df)[c(69,71,73,97)])
+
+# variab <- c("EDAD","ASToTGOULfinal")
+# 
+# dfr1 <- map_df(variab, ctabla2,df=df,d=1)
+# 
+# dfr2 <- map_df(variab, ctabla2,df=df,d=2)
+# 
+# dfr3 <- map_df(variab, ctabla2,df=df,d=3)
+
+```
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+
+dft <- map_df(variab, function(x){
+
+dfp <- df %>% as.data.frame() %>% .[,x]
+
+dfp <- dfp[!is.na(dfp)]
+
+if (mean(dfp) >= sd(dfp)*2){
+  
+  dfp <- ctabla4(df,x)}
+
+else {
+  
+  dfp <- ctabla3(df,x)
+
+  }})
+  
+
+```
+
+
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE, ft.split=FALSE}
+
+# dfr1 %>%
+# flextable() %>% 
+#   set_header_labels(N_1 = "Grupo 1 (Atorvastatina 20 mg + Fenofibrato 160 mg)",
+#                     N_2 = "Grupo 2 (Atorvastatina 20 mg)",
+#                     N_3 = "Grupo 3 (Fenofibrato 160 mg)",
+#                     `Kruskall Wallis` = "P Kruskall Wallis",
+#                     `Inter-grupo` = "P Inter-grupo") %>% 
+#   merge_at(i = 1, j = 2:3, part = "header") %>%
+#   merge_at(i = 1, j = 4:5, part = "header") %>% 
+#   merge_at(i = 1, j = 6:7, part = "header") %>% 
+#   add_header_row(values = c("", "N 8", "Mediana [P25 A P75]", "N 6", "Mediana [P25 A P75]", 
+#                             "N 9", "Mediana [P25 A P75]","",""), top = FALSE) %>% 
+#   merge_at(i = 1:2, j = 1, part = "header") %>%   
+#   merge_at(i = 1:2, j = 8, part = "header") %>% 
+#   merge_at(i = 1:2, j = 9, part = "header") %>% 
+#   align(i = 1:2, j = 1:9,align = "center", part = "header") %>% 
+#   fontsize(part = "header", size = 9) %>% 
+#   fontsize(part = "body", size = 8) %>% 
+#   autofit() %>%
+#   theme_box()
+
+
+```
+
+<br>
+
+<br>
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE, ft.split=FALSE}
+
+# dfr2 %>%
+# flextable() %>% 
+#   set_header_labels(N_1 = "Grupo 1 (Atorvastatina 20 mg + Fenofibrato 160 mg)",
+#                     N_2 = "Grupo 2 (Atorvastatina 20 mg)",
+#                     N_3 = "Grupo 3 (Fenofibrato 160 mg)",
+#                     `Kruskall Wallis` = "P Kruskall Wallis",
+#                     `Inter-grupo` = "P Inter-grupo") %>% 
+#   merge_at(i = 1, j = 2:3, part = "header") %>%
+#   merge_at(i = 1, j = 4:5, part = "header") %>% 
+#   merge_at(i = 1, j = 6:7, part = "header") %>% 
+#   add_header_row(values = c("", "N 20", "Mediana [P25 A P75]", "N 22", "Mediana [P25 A P75]", 
+#                             "N 30", "Mediana [P25 A P75]","",""), top = FALSE) %>% 
+#   merge_at(i = 1:2, j = 1, part = "header") %>%   
+#   merge_at(i = 1:2, j = 8, part = "header") %>% 
+#   merge_at(i = 1:2, j = 9, part = "header") %>% 
+#   align(i = 1:2, j = 1:9,align = "center", part = "header") %>% 
+#   fontsize(part = "header", size = 9) %>% 
+#   fontsize(part = "body", size = 8) %>% 
+#   autofit() %>%
+#   theme_box()
+
+
+```
+
+<br>
+
+<br>
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE, ft.split=FALSE}
+
+# dfr3 %>%
+# flextable() %>% 
+#   set_header_labels(N_1 = "Grupo 1 (Atorvastatina 20 mg + Fenofibrato 160 mg)",
+#                     N_2 = "Grupo 2 (Atorvastatina 20 mg)",
+#                     N_3 = "Grupo 3 (Fenofibrato 160 mg)",
+#                     `Kruskall Wallis` = "P Kruskall Wallis",
+#                     `Inter-grupo` = "P Inter-grupo") %>% 
+#   merge_at(i = 1, j = 2:3, part = "header") %>%
+#   merge_at(i = 1, j = 4:5, part = "header") %>% 
+#   merge_at(i = 1, j = 6:7, part = "header") %>% 
+#   add_header_row(values = c("", "N 57", "Mediana [P25 A P75]", "N 39", "Mediana [P25 A P75]", 
+#                             "N 49", "Mediana [P25 A P75]","",""), top = FALSE) %>% 
+#   merge_at(i = 1:2, j = 1, part = "header") %>%   
+#   merge_at(i = 1:2, j = 8, part = "header") %>% 
+#   merge_at(i = 1:2, j = 9, part = "header") %>% 
+#   align(i = 1:2, j = 1:9,align = "center", part = "header") %>% 
+#   fontsize(part = "header", size = 9) %>% 
+#   fontsize(part = "body", size = 8) %>% 
+#   autofit() %>%
+#   theme_box()
+
+
+```
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE, ft.split=FALSE}
+
+dft %>%
+flextable() %>%
+  set_header_labels(`MEDIANA P25 - P75 1` = "Grupo 1 (Atorvastatina 20 mg + Fenofibrato 160 mg)",
+                    `MEDIANA P25 - P75 2` = "Grupo 2 (Atorvastatina 20 mg)",
+                    `MEDIANA P25 - P75 3` = "Grupo 3 (Fenofibrato 160 mg)") %>%
+  align(i = 1, j = 1:5,align = "center", part = "header") %>%
+  fontsize(part = "header", size = 9) %>%
+  fontsize(part = "body", size = 8) %>%
+  autofit() %>%
+  theme_box()
+
+
+```
