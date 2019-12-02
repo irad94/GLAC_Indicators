@@ -272,3 +272,123 @@ chisqtable <- function(df,x){
 }
 
 
+cleanum <- function(ttt){
+  as.numeric(gsub('[^0-9\\.]', '', ttt))
+}
+
+# Error estándar
+
+std <- function(x) sd(x, na.rm = T)/sqrt(length(x))
+
+# Gráficas de errores
+
+gfunction <- function(df,x,title,ytitle){
+
+dfp <- df %>% filter(PP == 1) %>% as.data.frame()
+
+dfg <- dfp %>% 
+  group_by(grupodetratamiento) %>% summarise(value = median(get(x),na.rm = T))
+
+dfg <- left_join(dfg,dfp %>% 
+                   group_by(grupodetratamiento) %>% summarise(value = std(get(x))), 
+                 by = "grupodetratamiento") %>% rename(Var1=1,value=2,sd=3) %>% 
+  mutate(Var1 = ifelse(Var1 == "1","Grupo 1 (Atorvastatina 20 mg + Fenofibrato 160 mg)\n",
+                       ifelse(Var1 == "2","Grupo 2 (Atorvastatina 20 mg)\n",
+                              ifelse(Var1 == "3","Grupo 3 (Fenofibrato 160 mg)\n",NA))))
+
+
+pvalue2 <- pairwise.wilcox.test(x = dfp[,x], g = dfp$grupodetratamiento, p.adjust.method = "bonf", correct=FALSE)
+
+valores = c()
+
+for (i in 1:length(pvalue2$p.value)) {
+  
+  valores[i] <- ifelse(pvalue2$p.value[i] < 0.001,"p < 0.001", pvalue2$p.value[i] %>% round(2))
+  
+}
+
+interg <- paste0("Grupo 1 vs 2: ",valores[1],"\nGrupo 1 vs 3: ",
+                 valores[2],"\nGrupo 2 vs 3: ",valores[4]) %>% as.character()
+
+
+ggp <- ggplot(dfg) +
+  geom_bar(aes(x=Var1, y=value, fill = "manual"), stat="identity", alpha=0.8) +
+  geom_errorbar(aes(x=Var1, ymin=value-sd*2, ymax=value+sd*2), width=0.4, colour="black", alpha=0.6, size=0.65)+
+  theme_bw()+
+  scale_fill_manual("",values = c("#33658A"))+
+  labs(title = title,
+       y= ytitle,
+       x="Grupo de tratamiento",
+       caption = "Barras de error: +/- 2 SE")+
+  theme(axis.text.x = element_text(size=7.5),
+        axis.title.x = element_text(size=9, face = "bold", 
+                                    margin = margin(t=0.5,unit = "cm"), color = "#666666"),
+        axis.title.y = element_text(size=9, face = "bold",color = "#666666"),
+        plot.caption = element_text(hjust = 0.5, size=7.5,color = "#666666"),
+        plot.title = element_text(vjust=-2.5, size = 13.5, hjust = 0.5, 
+                                  color = "#666666", face = "bold", 
+                                  margin = margin(b=1, unit = "cm")),
+        legend.title = element_text(face="bold",color = "#666666"),
+        panel.grid = element_blank(),
+        legend.position = "none")+
+  annotate("label", x = 3, y = 1.05*(min(dfg$value))-((dfg[3,"sd"] %>% as.numeric())), 
+           label = interg, size=2, hjust = 0)+
+  ylim(c(1.05*(min(dfg$value))-((dfg[3,"sd"] %>% as.numeric()*2)),0))
+
+return(ggp)}
+
+gfunction2 <- function(df,x,title,ytitle){
+  
+  dfp <- df %>% filter(PP == 1) %>% as.data.frame()
+  
+  dfg <- dfp %>% 
+    group_by(grupodetratamiento) %>% summarise(value = median(get(x),na.rm = T))
+  
+  dfg <- left_join(dfg,dfp %>% 
+                     group_by(grupodetratamiento) %>% summarise(value = std(get(x))), 
+                   by = "grupodetratamiento") %>% rename(Var1=1,value=2,sd=3) %>% 
+    mutate(Var1 = ifelse(Var1 == "1","Grupo 1 (Atorvastatina 20 mg + Fenofibrato 160 mg)\n",
+                         ifelse(Var1 == "2","Grupo 2 (Atorvastatina 20 mg)\n",
+                                ifelse(Var1 == "3","Grupo 3 (Fenofibrato 160 mg)\n",NA))))
+  
+  
+  pvalue2 <- pairwise.wilcox.test(x = dfp[,x], g = dfp$grupodetratamiento, p.adjust.method = "bonf", correct=FALSE)
+  
+  valores = c()
+  
+  for (i in 1:length(pvalue2$p.value)) {
+    
+    valores[i] <- ifelse(pvalue2$p.value[i] < 0.001,"p < 0.001", pvalue2$p.value[i] %>% round(2))
+    
+  }
+  
+  interg <- paste0("Grupo 1 vs 2: ",valores[1],"\nGrupo 1 vs 3: ",
+                   valores[2],"\nGrupo 2 vs 3: ",valores[4]) %>% as.character()
+  
+  
+  ggp <- ggplot(dfg) +
+    geom_bar(aes(x=Var1, y=value, fill = "manual"), stat="identity", alpha=0.8) +
+    geom_errorbar(aes(x=Var1, ymin=value-sd*2, ymax=value+sd*2), width=0.4, colour="black", alpha=0.6, size=0.65)+
+    theme_bw()+
+    scale_fill_manual("",values = c("#33658A"))+
+    labs(title = title,
+         y= ytitle,
+         x="Grupo de tratamiento",
+         caption = "Barras de error: +/- 2 SE")+
+    theme(axis.text.x = element_text(size=7.5),
+          axis.title.x = element_text(size=9, face = "bold", 
+                                      margin = margin(t=0.5,unit = "cm"), color = "#666666"),
+          axis.title.y = element_text(size=9, face = "bold",color = "#666666"),
+          plot.caption = element_text(hjust = 0.5, size=7.5,color = "#666666"),
+          plot.title = element_text(vjust=-2.5, size = 13.5, hjust = 0.5, 
+                                    color = "#666666", face = "bold", 
+                                    margin = margin(b=1, unit = "cm")),
+          legend.title = element_text(face="bold",color = "#666666"),
+          panel.grid = element_blank(),
+          legend.position = "none")+
+    annotate("label", x = 3, y = 1.05*(min(dfg$value))-((dfg[3,"sd"] %>% as.numeric()*1.5)), 
+             label = interg, size=2, hjust = 0)+
+    ylim(c(1.05*(min(dfg$value))-((dfg[3,"sd"] %>% as.numeric()*2)),
+           1.1*(max(dfg$value)+(2*dfg[3,"sd"] %>% as.numeric()))))
+
+return(ggp)}

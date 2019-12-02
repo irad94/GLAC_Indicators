@@ -62,31 +62,31 @@ body = dbc.Container(
             html.P("")]),
         dbc.Row([
             html.Div([
-            dcc.Graph(id='indicator-graphic')])],
-            style={'float': 'right'}),
+                dcc.Graph(id='indicator-graphic')])],
+                style={'float': 'right'}),
         dbc.Row([
             html.P("")]),
         dbc.Row([
             html.P("Introduzca el nombre del eje de las ordenadas",
-                   style={'font-size': '120%','margin-top': '15px', 'margin-bottom': '15px'})]),
+                   style={'font-size': '120%', 'margin-top': '15px', 'margin-bottom': '15px'})]),
         dbc.Row([
             dcc.Input(id='input-1-state', type='text', value='FGF21_OFICIAL', size='65')]),
         dbc.Row([
             html.P("Introduzca el nombre del eje de las abscisas",
-                   style={'font-size': '120%','margin-top': '15px', 'margin-bottom': '15px'})]),
+                   style={'font-size': '120%', 'margin-top': '15px', 'margin-bottom': '15px'})]),
         dbc.Row([
             dcc.Input(id='input-2-state', type='text', value='ACTANTIOX_OFICIAL', size='65')]),
         dbc.Row([
             html.Hr(style={'width': '97%', 'margin': '0', 'margin-top': '15px', 'margin-bottom': '15px'})]),
         dbc.Row([
-            dbc.Button('ACTUALIZAR EJES', id='btn-1', color="primary", className="mr-2",size="lg", block=True),
+            dbc.Button('ACTUALIZAR EJES', id='btn-1', color="primary", className="mr-2", size="lg", block=True),
         ]),
         dbc.Row([html.Div([
             dcc.Upload(
                 id='upload-data',
                 children=html.Div([
                     'Drag and Drop or ',
-                    html.A('Select Files',style={'font-size': '115%'})]),
+                    html.A('Select Files', style={'font-size': '115%'})]),
                 style={
                     'width': '100%',
                     'height': '60px',
@@ -113,14 +113,15 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div([navbar, body])
 
+
 @app.callback(
     Output('indicator-graphic', 'figure'),
     [Input('btn-1', 'n_clicks'),
-     Input("upload-data","contents"),
-     Input("upload-data",'filename'),
+     Input("upload-data", "contents"),
+     Input("upload-data", 'filename'),
      Input('xaxis-column', 'value'),
      Input('yaxis-column', 'value')],
-     [State('input-1-state', 'value'),
+    [State('input-1-state', 'value'),
      State('input-2-state', 'value')])
 def update_graph(n_clicks1, contents, filename, xaxis_column_name, yaxis_column_name, input_1, input_2):
     content_type, content_string = contents.split(',')
@@ -133,7 +134,7 @@ def update_graph(n_clicks1, contents, filename, xaxis_column_name, yaxis_column_
                 io.StringIO(decoded.decode('utf-8')))
         elif 'sav' in filename:
             # Assume that the user uploaded an excel file
-            df = pd.read_spss(io.BytesIO(decoded))
+            df = pd.read_spss(decoded)
     except Exception as e:
         print(e)
         return html.Div([
@@ -158,9 +159,9 @@ def update_graph(n_clicks1, contents, filename, xaxis_column_name, yaxis_column_
                 'color': 'black'
             },
             hoverinfo='x+y'
-        ),dict(
+        ), dict(
             x=dff[xaxis_column_name],
-            y=line,mode='lines',
+            y=line, mode='lines',
             marker={
                 'size': 9,
                 'opacity': 0.8,
@@ -178,11 +179,11 @@ def update_graph(n_clicks1, contents, filename, xaxis_column_name, yaxis_column_
             annotations=[dict(
                 x=dff[xaxis_column_name].max()-(dff[xaxis_column_name].max()*0.1),
                 y=dff[yaxis_column_name].max()-(dff[yaxis_column_name].max()*0.1),
-                text='<b>R^2 = '+str(round(r_value**2,4))+', p-value = '+str(round(p_value,4))+'<b>',
+                text='<b>R^2 = '+str(round(r_value**2, 4))+', p-value = '+str(round(p_value, 4))+'<b>',
                 showarrow=False,
                 font_size=10,
                 font_color="grey"
-            ),dict(
+            ), dict(
                 x=dff[xaxis_column_name].max()-(dff[xaxis_column_name].max()*0.12),
                 y=dff[yaxis_column_name].max()-(dff[yaxis_column_name].max()*0.15),
                 text='<b>Y = ' + str(round(intercept, 4)) + ' + ' + str(round(slope, 4)) + 'X<b>',
@@ -194,17 +195,19 @@ def update_graph(n_clicks1, contents, filename, xaxis_column_name, yaxis_column_
         )
     }
 
+
 @app.callback(
     Output("base-title", 'children'),
-    [Input("upload-data",'filename')])
+    [Input("upload-data", 'filename')])
 def update_graph(filename):
     return filename
 
+
 @app.callback(
     [Output('yaxis-column', 'options'),
-     Output('xaxis-column','options')],
-    [Input("upload-data",'contents'),
-     Input('upload-data','filename')])
+     Output('xaxis-column', 'options')],
+    [Input("upload-data", 'contents'),
+     Input('upload-data', 'filename')])
 def update_graph(contents, filename):
     content_type, content_string = contents.split(',')
 
@@ -228,7 +231,8 @@ def update_graph(contents, filename):
 
     available_indicators = df.columns
 
-    return [{'label': i, 'value': i} for i in available_indicators]
+    return [{'label': i, 'value': i} for i in available_indicators], [{'label': i, 'value': i} for i in available_indicators]
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)

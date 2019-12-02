@@ -6,7 +6,7 @@ output:
 date: "`r format(Sys.Date(), '%A, %B %d, %Y')`"
 ---
 
-```{r config, message=FALSE, warning=FALSE, code=readLines('C:/Users/IOR_C/Documents/foreign_proyects/v_analisis/code/scpt_config_t.R'), include=FALSE}
+```{r config, message=FALSE, warning=FALSE, code=readLines('C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/code/scpt_config_t.R'), include=FALSE}
 
 ```
 
@@ -26,7 +26,7 @@ dft4 <- chisqtable(df,"alcalzocincuentaporcientodereduccion")
 ```
 
 
-```{r, echo=FALSE, message=FALSE,warning=FALSE, ft.split=FALSE, include=FALSE}
+```{r, echo=FALSE, message=FALSE,warning=FALSE, ft.split=FALSE}
 
 dft1 %>%
 flextable() %>%
@@ -115,3 +115,348 @@ flextable() %>%
 
 ```
 
+## Colesterol LDL de 70 mg/dL
+
+```{r}
+dft1 %<>% mutate(NOA = str_sub(NO,1,4) %>% cleanum(), 
+                SIA = str_sub(SI,1,4)%>% cleanum()) %>% 
+  dplyr::select(c(1,6:7)) %>% gather(2:length(.), key = "meta", value = "value") %>% 
+  mutate(meta = str_replace_all(meta,"SIA","Si alcanzó la meta") %>% 
+           str_replace_all("NOA","No alcanzó la meta"))
+
+```
+
+```{r, fig.width=10, fig.height=5.5}
+
+ggp <- ggplot(dft1, aes(fill=meta, y=value, x=Var1))+
+  geom_bar(position="fill", stat="identity")+
+  theme_classic()+
+  geom_text(position = position_fill(vjust = .5),
+            aes(label = paste0(value,"%"),group=meta), 
+            size = 3.5, fontface="bold", color = "#333333")+
+  scale_fill_manual("Colesterol LDL de 70 mg/dL",values = c("#CC3366","#33CCCC","#CC3399","#FF6699"))+
+  labs(title = "Porcentaje de pacientes que alcanzó meta de Colesterol LDL\nmenor o igual a 70 mg/dL por grupo de tratamiento",
+       y="Porcentaje",
+       x="Grupo de tratamiento")+
+  theme(axis.text.x = element_text(size=7.5),
+        axis.title.x = element_text(size=9, face = "bold", 
+                                    margin = margin(t=0.5,unit = "cm"), color = "#666666"),
+        axis.title.y = element_text(size=9, face = "bold",color = "#666666"),
+        plot.caption = element_text(hjust = 0),
+        plot.title = element_text(vjust=-2.5, size = 13.5, hjust = 0.5, 
+                                  color = "#666666", face = "bold", 
+                                  margin = margin(b=1, unit = "cm")),
+        plot.subtitle = element_text(vjust=-2.5, size = 10, hjust = 0.5, color = "#666666", face = "italic",
+                                     margin = margin(b=1, unit = "cm")),
+        strip.background = element_blank(),
+        legend.title = element_text(face="bold",color = "#666666"))+
+  scale_y_continuous(labels = function(x) paste0(x*100,"%"))
+
+ggsave("colesterol_ldl_70mg.jpeg", plot = ggp, 
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen", 
+           dpi = 320, device = "jpeg", width = 26, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+<br>
+
+## Colesterol LDL de 100 mg/dL
+
+```{r}
+dft2 %<>% mutate(NOA = str_sub(NO,1,4) %>% cleanum(), 
+                SIA = str_sub(SI,1,4)%>% cleanum()) %>% 
+  dplyr::select(c(1,6:7)) %>% gather(2:length(.), key = "meta", value = "value") %>% 
+  mutate(meta = str_replace_all(meta,"SIA","Si alcanzó la meta") %>% 
+           str_replace_all("NOA","No alcanzó la meta"))
+
+```
+
+```{r, fig.width=10, fig.height=5.5}
+
+ggp <- ggplot(dft2, aes(fill=meta, y=value, x=Var1))+
+  geom_bar(position="fill", stat="identity")+
+  theme_classic()+
+  geom_text(position = position_fill(vjust = .5),
+            aes(label = paste0(value,"%"),group=meta), 
+            size = 3.5, fontface="bold", color = "#333333")+
+  scale_fill_manual("Colesterol LDL de 100 mg/dL",values = c("#CC3366","#33CCCC","#CC3399","#FF6699"))+
+  labs(title = "Porcentaje de pacientes que alcanzó meta de Colesterol LDL\nmenor o igual a 100 mg/dL por grupo de tratamiento",
+       y="Porcentaje",
+       x="Grupo de tratamiento")+
+  theme(axis.text.x = element_text(size=7.5),
+        axis.title.x = element_text(size=9, face = "bold", 
+                                    margin = margin(t=0.5,unit = "cm"), color = "#666666"),
+        axis.title.y = element_text(size=9, face = "bold",color = "#666666"),
+        plot.caption = element_text(hjust = 0),
+        plot.title = element_text(vjust=-2.5, size = 13.5, hjust = 0.5, 
+                                  color = "#666666", face = "bold", 
+                                  margin = margin(b=1, unit = "cm")),
+        plot.subtitle = element_text(vjust=-2.5, size = 10, hjust = 0.5, color = "#666666", face = "italic",
+                                     margin = margin(b=1, unit = "cm")),
+        strip.background = element_blank(),
+        legend.title = element_text(face="bold",color = "#666666"))+
+  scale_y_continuous(labels = function(x) paste0(x*100,"%"))
+
+ggsave("colesterol_ldl_100mg.jpeg", plot = ggp, 
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen", 
+           dpi = 320, device = "jpeg", width = 26, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+```
+
+## Alcanzó 30% de reducción de colesterol LDL
+
+```{r}
+dft3 %<>% mutate(NOA = str_sub(NO,1,4) %>% cleanum(), 
+                SIA = str_sub(SI,1,4)%>% cleanum()) %>% 
+  dplyr::select(c(1,6:7)) %>% gather(2:length(.), key = "meta", value = "value") %>% 
+  mutate(meta = str_replace_all(meta,"SIA","Si alcanzó la meta") %>% 
+           str_replace_all("NOA","No alcanzó la meta"))
+
+```
+
+```{r, fig.width=10, fig.height=5.5}
+
+ggp <- ggplot(dft3, aes(fill=meta, y=value, x=Var1))+
+  geom_bar(position="fill", stat="identity")+
+  theme_classic()+
+  geom_text(position = position_fill(vjust = .5),
+            aes(label = paste0(value,"%"),group=meta), 
+            size = 3.5, fontface="bold", color = "#333333")+
+  scale_fill_manual("Reducción del 30% de colesterol LDL",values = c("coral","aquamarine3","#CC3399","#FF6699"))+
+  labs(title = "Porcentaje de pacientes que alcanzó meta de reducción del 30% de\nColesterol LDL por grupo de tratamiento",
+       y="Porcentaje",
+       x="Grupo de tratamiento")+
+  theme(axis.text.x = element_text(size=7.5),
+        axis.title.x = element_text(size=9, face = "bold", 
+                                    margin = margin(t=0.5,unit = "cm"), color = "#666666"),
+        axis.title.y = element_text(size=9, face = "bold",color = "#666666"),
+        plot.caption = element_text(hjust = 0),
+        plot.title = element_text(vjust=-2.5, size = 13.5, hjust = 0.5, 
+                                  color = "#666666", face = "bold", 
+                                  margin = margin(b=1, unit = "cm")),
+        plot.subtitle = element_text(vjust=-2.5, size = 10, hjust = 0.5, color = "#666666", face = "italic",
+                                     margin = margin(b=1, unit = "cm")),
+        strip.background = element_blank(),
+        legend.title = element_text(face="bold",color = "#666666"))+
+  scale_y_continuous(labels = function(x) paste0(x*100,"%"))
+
+ggsave("reduc_colesterol_30.jpeg", plot = ggp, 
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen", 
+           dpi = 320, device = "jpeg", width = 26, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+
+## Alcanzó 50% de reducción de colesterol LDL
+
+```{r}
+dft4 %<>% mutate(NOA = str_sub(NO,1,4) %>% cleanum(), 
+                SIA = str_sub(SI,1,4)%>% cleanum()) %>% 
+  dplyr::select(c(1,6:7)) %>% gather(2:length(.), key = "meta", value = "value") %>% 
+  mutate(meta = str_replace_all(meta,"SIA","Si alcanzó la meta") %>% 
+           str_replace_all("NOA","No alcanzó la meta"))
+
+```
+
+```{r, fig.width=10, fig.height=5.5}
+
+ggp <- ggplot(dft4, aes(fill=meta, y=value, x=Var1))+
+  geom_bar(position="fill", stat="identity")+
+  theme_classic()+
+  geom_text(position = position_fill(vjust = .5),
+            aes(label = paste0(value,"%"),group=meta), 
+            size = 3.5, fontface="bold", color = "#333333")+
+  scale_fill_manual("Reducción del 50% de colesterol LDL",values = c("coral","aquamarine3","#CC3399","#FF6699"))+
+  labs(title = "Porcentaje de pacientes que alcanzó meta de reducción del 50% de\nColesterol LDL por grupo de tratamiento",
+       y="Porcentaje",
+       x="Grupo de tratamiento")+
+  theme(axis.text.x = element_text(size=7.5),
+        axis.title.x = element_text(size=9, face = "bold", 
+                                    margin = margin(t=0.5,unit = "cm"), color = "#666666"),
+        axis.title.y = element_text(size=9, face = "bold",color = "#666666"),
+        plot.caption = element_text(hjust = 0),
+        plot.title = element_text(vjust=-2.5, size = 13.5, hjust = 0.5, 
+                                  color = "#666666", face = "bold", 
+                                  margin = margin(b=1, unit = "cm")),
+        plot.subtitle = element_text(vjust=-2.5, size = 10, hjust = 0.5, color = "#666666", face = "italic",
+                                     margin = margin(b=1, unit = "cm")),
+        strip.background = element_blank(),
+        legend.title = element_text(face="bold",color = "#666666"))+
+  scale_y_continuous(labels = function(x) paste0(x*100,"%"))
+
+ggsave("reduc_colesterol_50.jpeg", plot = ggp, 
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen", 
+           dpi = 320, device = "jpeg", width = 26, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+# Gráficas de deltas
+
+## deltacolesterolNOHDL
+
+```{r,  fig.width=7.5, fig.height=5.5}
+
+ggp <- gfunction(df,"deltacolesterolNOHDL",
+                 title = "Mediana de diferencia de Colesterol no HDL por grupo de tratamiento",
+                 ytitle = "Delta Colesterol no-HDL mg/dL")
+
+ggsave("deltacolesterolNOHDL_error.jpeg", plot = ggp,
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen",
+           dpi = 320, device = "jpeg", width = 22, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+## deltacolesterolNOHDL
+
+```{r,  fig.width=7.5, fig.height=5.5}
+
+ggp <- gfunction(df,"deltatrigliceridos",
+                 title = "Mediana de diferencia de Triglicéridos por grupo de tratamiento",
+                 ytitle = "Delta Triglicéridos en mg/dL")
+
+ggsave("deltatrigliceridos_error.jpeg", plot = ggp,
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen",
+           dpi = 320, device = "jpeg", width = 22, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+## deltaLDL
+
+```{r,  fig.width=7.5, fig.height=5.5}
+
+ggp <- gfunction(df,"deltaLDL",
+                 title = "Mediana de diferencia de Colesterol LDL por grupo de tratamiento",
+                 ytitle = "Delta Colesterol LDL en mg/dL")
+
+ggsave("deltaLDL_error.jpeg", plot = ggp,
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen",
+           dpi = 320, device = "jpeg", width = 22, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+## deltaVldl
+
+```{r,  fig.width=7.5, fig.height=5.5}
+
+ggp <- gfunction(df,"deltaVldl",
+                 title = "Mediana de diferencia de Colesterol VLDL por grupo de tratamiento",
+                 ytitle = "Delta Colesterol VLDL en mg/dL")
+
+ggsave("deltaVLDL_error.jpeg", plot = ggp,
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen",
+           dpi = 320, device = "jpeg", width = 22, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+
+## deltaApoA1
+
+```{r,  fig.width=7.5, fig.height=5.5}
+
+ggp <- gfunction2(df,"deltaApoA1",
+                 title = "Mediana de diferencia de apo A1 por grupo de tratamiento",
+                 ytitle = "Delta apo A1 en mg/dL")
+
+ggsave("ApoA1_error.jpeg", plot = ggp,
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen",
+           dpi = 320, device = "jpeg", width = 22, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+
+## deltaApoB
+
+```{r,  fig.width=7.5, fig.height=5.5}
+
+ggp <- gfunction(df,"deltaApoB",
+                 title = "Mediana de diferencia de apo B100 por grupo de tratamiento",
+                 ytitle = "Delta apo B100 en mg/dL")
+
+ggsave("deltaApoB_error.jpeg", plot = ggp,
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen",
+           dpi = 320, device = "jpeg", width = 22, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+## deltaratioldlhdl
+
+```{r,  fig.width=7.5, fig.height=5.5}
+
+ggp <- gfunction(df,"deltaratioldlhdl",
+                 title = "Mediana de diferencia de la razón de Colesterol LDL/HDL por grupo de tratamiento",
+                 ytitle = "Delta de la razón de Colesterol LDL/HDL")
+
+ggsave("deltaratioldlhdl_error.jpeg", plot = ggp,
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen",
+           dpi = 320, device = "jpeg", width = 22, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+## DELTAratioApoBApoA
+
+```{r,  fig.width=7.5, fig.height=5.5}
+
+ggp <- gfunction(df,"DELTAratioApoBApoA",
+                 title = "Mediana de diferencia de la razón de apo B100/apo A1\npor grupo de tratamiento",
+                 ytitle = "Delta de la razón apo B100/apo A1")
+
+ggsave("DELTAratioApoBApoA_error.jpeg", plot = ggp,
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen",
+           dpi = 320, device = "jpeg", width = 22, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+## DELTAratioTGHDL
+
+```{r,  fig.width=7.5, fig.height=5.5}
+
+ggp <- gfunction(df,"DELTAratioTGHDL",
+                 title = "Mediana de diferencia de la razón de Triglicéridos/Colesterol HDL\npor grupo de tratamiento",
+                 ytitle = "Delta de la razón Triglicéridos/Colesterol HDL")
+
+ggsave("DELTAratioTGHDL_error.jpeg", plot = ggp,
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen",
+           dpi = 320, device = "jpeg", width = 22, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
+
+## deltaPCR
+
+```{r,  fig.width=7.5, fig.height=5.5}
+
+ggp <- gfunction2(df,"deltaPCR",
+                 title = "Mediana de diferencia de Proteína C reactiva por grupo de tratamiento",
+                 ytitle = "Delta de Proteína C reactiva en mg/dL")
+
+ggsave("deltaPCR_error.jpeg", plot = ggp,
+           path = "C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/imagen",
+           dpi = 320, device = "jpeg", width = 22, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+
+```
