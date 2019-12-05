@@ -101,9 +101,11 @@ body = dbc.Container(
                     'font-size': '115%',
                 },
                 # Allow multiple files to be uploaded
-                multiple=True
+                multiple=False
             )
-        ])])
+        ])]),
+        dbc.Row([
+            html.P("")])
     ],
     className="mt-4",
 )
@@ -113,6 +115,38 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div([navbar, body])
 
+
+@app.callback(
+    [Output('yaxis-column', 'options'),
+     Output('xaxis-column', 'options')],
+    [Input("upload-data", 'contents'),
+     Input('upload-data', 'filename')])
+def update_graph(contents, filename):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'csv' in filename:
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
+            df = df.select_dtypes(include=np.number).dropna(axis=1, how='all')
+            available_indicators = df.columns
+            options1 = [{'label': i, 'value': i} for i in available_indicators]
+            options2 = [{'label': i, 'value': i} for i in available_indicators]
+        elif 'sav' in filename:
+            # Assume that the user uploaded an excel file
+            df = open(decoded)
+            df = df.select_dtypes(include=np.number).dropna(axis=1, how='all')
+            available_indicators = df.columns
+            options1 = [{'label': i, 'value': i} for i in available_indicators]
+            options2 = [{'label': i, 'value': i} for i in available_indicators]
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
+    return options1, options2
 
 @app.callback(
     Output('indicator-graphic', 'figure'),
@@ -134,7 +168,7 @@ def update_graph(n_clicks1, contents, filename, xaxis_column_name, yaxis_column_
                 io.StringIO(decoded.decode('utf-8')))
         elif 'sav' in filename:
             # Assume that the user uploaded an excel file
-            df = pd.read_spss(decoded)
+            df = open(decoded)
     except Exception as e:
         print(e)
         return html.Div([
@@ -202,36 +236,6 @@ def update_graph(n_clicks1, contents, filename, xaxis_column_name, yaxis_column_
 def update_graph(filename):
     return filename
 
-
-@app.callback(
-    [Output('yaxis-column', 'options'),
-     Output('xaxis-column', 'options')],
-    [Input("upload-data", 'contents'),
-     Input('upload-data', 'filename')])
-def update_graph(contents, filename):
-    content_type, content_string = contents.split(',')
-
-    decoded = base64.b64decode(content_string)
-    try:
-        if 'csv' in filename:
-            # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
-        elif 'sav' in filename:
-            # Assume that the user uploaded an excel file
-            df = pd.read_spss(decoded)
-    except Exception as e:
-        print(e)
-        return html.Div([
-            'There was an error processing this file.'
-        ])
-
-    df = df.select_dtypes(include=np.number) \
-        .dropna(axis=1, how='all')
-
-    available_indicators = df.columns
-
-    return [{'label': i, 'value': i} for i in available_indicators], [{'label': i, 'value': i} for i in available_indicators]
 
 
 if __name__ == '__main__':
