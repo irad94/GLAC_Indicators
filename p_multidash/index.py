@@ -1,8 +1,7 @@
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 
 from app import app
 from apps import app1, app2
@@ -16,64 +15,60 @@ SIDEBAR_STYLE = {
     "width": "16rem",
     "padding": "2rem 1rem",
     "background-color": "#f8f9fa",
+    'display': 'flex'
 }
 
 # the styles for the main content position it to the right of the sidebar and
 # add some padding.
-CONTENT_STYLE = {
-    "margin-left": "18rem",
-    "margin-right": "2rem",
-    "padding": "2rem 1rem",
-}
 
-sidebar = html.Div(
-    [
-        html.H2("Sidebar", className="display-4"),
-        html.Hr(),
-        html.P(
-            "A simple sidebar layout with navigation links", className="lead"
-        ),
-        dbc.Nav(
-            [
-                dbc.NavLink("Page 1", href="/apps/app1", id="page-1-link"),
-                dbc.NavLink("Page 2", href="/apps/app2", id="page-2-link"),
-            ],
-            vertical=True,
-            pills=True,
-        ),
-    ],
-    style=SIDEBAR_STYLE,
+sidebar = dbc.Nav([
+    html.Div([html.H2("Sidebar", className="display-4"),
+              html.Hr()]),
+    html.Div([html.Ul(html.P("A simple sidebar layout with navigation links", className="lead"))]),
+    dbc.Nav(
+        [
+            dbc.NavLink("Page 1", href="/apps/app1", id="page-1-link"),
+            dbc.NavLink("Page 2", href="/apps/app2", id="page-2-link"),
+        ],
+        Vertical=True,
+        pills=True,
+        )],
+        style=SIDEBAR_STYLE,
+        id="sidebar"
 )
 
-navbar = dbc.NavbarSimple(
+#id="left-collapse"
+
+navbar = dbc.Navbar(
     children=[
-        dbc.NavItem(dbc.NavLink("Link", href="#")),
-        dbc.DropdownMenu(
-            nav=True,
-            in_navbar=True,
-            label="Menu",
-            children=[
-                dbc.DropdownMenuItem("Entry 1"),
-                dbc.DropdownMenuItem("Entry 2"),
-                dbc.DropdownMenuItem(divider=True),
-                dbc.DropdownMenuItem("Entry 3"),
+        html.A(
+            dbc.Row([
+                dbc.Col(dbc.Button(html.Span([html.I(className="fas fa-align-justify")]),
+                                   id="left", color="light", outline=True, size='lg'), md=1),
+                dbc.Col(dbc.NavbarBrand("PLATAFORMA DE ANÁLISIS REGRESIONAL UNIVARIADO",
+                                        className="ml-2",
+                                        style={'font-size': '200%'}), md=7)
             ],
-        ),
+                align="center",
+                no_gutters=True
+            ),
+            href="#",
+        )
     ],
-    brand="PLATAFORMA DE ANÁLISIS REGRESIONAL UNIVARIADO",
-    brand_href="#",
     sticky="top",
     color="primary",
     dark=True,
-    style={
-        "margin-left": "16rem",
-        "margin-right": "auto",
-        "padding": "1.5rem 1rem",
-    }
-)
-content = html.Div(id="page-content", style=CONTENT_STYLE)
+    style={"margin-left": "16rem",
+           "margin-right": "auto",
+           "padding": "1.5rem 1rem"
+           }, id="navbar")
 
-app.layout = html.Div([dcc.Location(id="url", refresh=False), sidebar, navbar,content])
+content = html.Div(id="page-content",
+                   style={"margin-left": "15rem",
+                          "margin-right": "2rem",
+                          "padding": "2rem 1rem"})
+
+app.layout = html.Div([dcc.Location(id="url", refresh=False), sidebar, navbar, content])
 
 
 @app.callback(
@@ -101,6 +96,17 @@ def render_page_content(pathname):
             html.P(f"The pathname {pathname} was not recognised..."),
         ]
     )
+
+
+@app.callback(
+    Output("left-collapse", "is_open"),
+    [Input("left", "n_clicks")],
+    [State("left-collapse", "is_open")],
+)
+def toggle_left(n_left, is_open):
+    if n_left:
+        return not is_open
+    return is_open
 
 
 if __name__ == '__main__':
