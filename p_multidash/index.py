@@ -8,36 +8,29 @@ from apps import app1, app2
 
 # the style arguments for the sidebar. We use position:fixed and a fixed width
 SIDEBAR_STYLE = {
-    "position": "fixed",
-    "top": 0,
-    "left": 0,
-    "bottom": 0,
-    "width": "16rem",
-    "padding": "2rem 1rem",
     "background-color": "#f8f9fa",
-    'display': 'flex'
+    'display': 'flex',
+    'min-width': '250px',
+    'max-width': '250px',
+    'min-height': '100vh'
 }
 
 # the styles for the main content position it to the right of the sidebar and
 # add some padding.
 
-sidebar = dbc.Nav([
-    html.Div([html.H2("Sidebar", className="display-4"),
-              html.Hr()]),
-    html.Div([html.Ul(html.P("A simple sidebar layout with navigation links", className="lead"))]),
-    dbc.Nav(
-        [
-            dbc.NavLink("Page 1", href="/apps/app1", id="page-1-link"),
-            dbc.NavLink("Page 2", href="/apps/app2", id="page-2-link"),
-        ],
-        Vertical=True,
+sidebar = dbc.Collapse(
+    dbc.Nav([
+        html.Div([html.H2("Sidebar", className="display-4"),
+                  html.Hr()]),
+        html.Div([html.Ul(html.P("A simple sidebar layout with navigation links", className="lead"))]),
+        dbc.NavLink("Page 1", href="/apps/app1", id="page-1-link"),
+        dbc.NavLink("Page 2", href="/apps/app2", id="page-2-link")],
+        vertical=True,
         pills=True,
-        )],
         style=SIDEBAR_STYLE,
         id="sidebar"
-)
-
-#id="left-collapse"
+    ),
+    id="left-collapse")
 
 navbar = dbc.Navbar(
     children=[
@@ -50,7 +43,7 @@ navbar = dbc.Navbar(
                                         style={'font-size': '200%'}), md=7)
             ],
                 align="center",
-                no_gutters=True
+                no_gutters=False
             ),
             href="#",
         )
@@ -58,17 +51,19 @@ navbar = dbc.Navbar(
     sticky="top",
     color="primary",
     dark=True,
-    style={"margin-left": "16rem",
-           "margin-right": "auto",
-           "padding": "1.5rem 1rem"
-           }, id="navbar")
+    id="navbar",
+    style={"padding": "1.5rem"})
 
-content = html.Div(id="page-content",
-                   style={"margin-left": "15rem",
-                          "margin-right": "2rem",
-                          "padding": "2rem 1rem"})
+content = html.Div(id="page-content")
 
-app.layout = html.Div([dcc.Location(id="url", refresh=False), sidebar, navbar, content])
+app.layout = html.Div([dcc.Location(id="url", refresh=False),
+                       sidebar,
+                       html.Div([navbar, content],
+                                style={'width': '100%'}
+                                )],
+                      style={'display': 'flex',
+                             'width': '100%',
+                             'align-items': 'stretch'})
 
 
 @app.callback(
