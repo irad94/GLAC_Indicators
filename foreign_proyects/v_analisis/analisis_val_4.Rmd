@@ -1,0 +1,345 @@
+---
+title: "Análisis de base de datos"
+output:
+  word_document:
+    reference_docx: word-styles-reference-01.docx
+date: "`r format(Sys.Date(), '%A, %B %d, %Y')`"
+---
+
+```{r config, message=FALSE, warning=FALSE, code=readLines('C:/Users/IOR_C/Documents/GitHub/personal/foreign_proyects/v_analisis/code/scpt_config_t.R'), include=FALSE}
+
+```
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+df <- read_excel("C:/Users/IOR_C/Downloads/Base de datos labs al 08.01.20.xlsx", sheet = 3)
+```
+
+
+```{r}
+
+df1 <- filter(df, iniciales %in% c("RCL","ESM","ESV","RAR","EGP","EFH"), 
+              visita %in% c("V-2","V-3","V-4","V-5","V-6","V-7","V-8")) %>% 
+  mutate(sexo = ifelse(iniciales %in% c("RCL","RAR","EGP","MAPJ"),"hombre","mujer"),
+         edad = cleanum(edad))
+
+
+```
+
+### Tabla.1 Datos demográficos
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+
+dft <- df1 %>% filter(visita == "V-2") %>% 
+  group_by(grupo_intervencion) %>%
+  summarise(pacientes = n_distinct(iniciales)) %>% adorn_totals()
+
+dft <- left_join(dft,df1 %>% filter(visita == "V-2") %>% 
+  group_by(grupo_intervencion, sexo) %>%
+  summarise(conteo = n_distinct(iniciales)) %>%
+  mutate(`% de mujeres` = (conteo/sum(conteo)*100) %>% round()) %>% filter(sexo == "mujer") %>% 
+  rbind.fill(df1 %>% filter(visita == "V-2") %>% 
+  group_by(sexo) %>%
+  summarise(conteo = n_distinct(iniciales)) %>%
+  mutate(`% de mujeres` = (conteo/sum(conteo)*100) %>% round()) %>% filter(sexo == "mujer")) %>% 
+  dplyr::select(c(1,4)) %>% 
+  mutate(grupo_intervencion = ifelse(is.na(grupo_intervencion),"Total",grupo_intervencion)))
+
+dft <- left_join(dft, df1 %>% filter(visita == "V-2") %>% 
+  group_by(grupo_intervencion, iniciales) %>%
+  summarise(media = mean(edad, na.rm = T) %>% round()) %>%
+  group_by(grupo_intervencion) %>%
+  summarise(media = mean(media, na.rm = T) %>% round()) %>%
+  rbind.fill(df1 %>% filter(visita == "V-2") %>% 
+  group_by(iniciales) %>%
+  summarise(media = mean(edad) %>% round()) %>%
+  group_by() %>%
+  summarise(media = mean(media) %>% round()) %>% 
+    mutate(grupo_intervencion = "Total")))
+
+# Agregar media de años de diagnóstico de diabetes tipo 2
+
+dft <- left_join(dft,df1 %>% filter(visita == "V-2") %>% 
+  group_by(grupo_intervencion) %>%
+  summarise(`media diagnóstico diabetes tipo 2` = mean(años_dx_dt2, na.rm = T) %>% round(1)) %>%
+  rbind.fill(df1 %>% filter(visita == "V-2") %>% 
+  group_by() %>%
+  summarise(`media diagnóstico diabetes tipo 2` = mean(años_dx_dt2, na.rm = T) %>% round(1)) %>%
+  mutate(grupo_intervencion = "Total")))
+
+
+# Cantidad de pacientes con diagnóstico de hipertensión
+
+dft <- left_join(dft,df1 %>% filter(visita == "V-2", dx_hipertension == 1) %>% 
+  group_by(grupo_intervencion) %>%
+  summarise(`pacientes con hipertensión` = n_distinct(iniciales)) %>% adorn_totals())
+
+# Agregar la media de años de diagnóstico de hipertensión
+
+dft <- left_join(dft,df1 %>% filter(visita == "V-2") %>% 
+  group_by(grupo_intervencion) %>%
+  summarise(`media diagnóstico hipertensión` = mean(años_dx_has, na.rm = T) %>% round(1)) %>%
+  rbind.fill(df1 %>% filter(visita == "V-2") %>% 
+  group_by() %>%
+  summarise(`media diagnóstico hipertensión` = mean(años_dx_has, na.rm = T) %>% round(1)) %>%
+  mutate(grupo_intervencion = "Total")))
+
+# Agregar número de pacientes que tienen trigliceridos altos (hipertrigliceridemia == 1)
+
+dft <- left_join(dft,df1 %>% filter(visita == "V-2", hipertrigliceridemia == 1) %>% 
+  group_by(grupo_intervencion) %>%
+  summarise(`pacientes con trigliceridos altos` = n_distinct(iniciales)) %>% adorn_totals())
+
+
+# Agregar número de pacientes que tienen colesteron bajo (colesterol_hdl_bajo == 1)
+
+dft <- left_join(dft,df1 %>% filter(visita == "V-2", colesterol_hdl_bajo == 1) %>% 
+  group_by(grupo_intervencion) %>%
+  summarise(`pacientes con colesterol bajo` = n_distinct(iniciales)) %>% adorn_totals())
+
+# Agregar pacientes con circunferencia de cintura alto (circunferencia_cintura_alto == 1)
+
+dft <- left_join(dft,df1 %>% filter(visita == "V-2", circunferencia_cintura_alto == 1) %>% 
+  group_by(grupo_intervencion) %>%
+  summarise(`pacientes con circunferencia de cintura alto` = n_distinct(iniciales)) %>% adorn_totals())
+
+
+dft %<>% gather(2:length(.), key = "Variable", value = "value") %>% 
+  spread(key='grupo_intervencion', value = "value")
+
+flextable(dft) %>%
+  font(fontname = "calibri", part = "all") %>% 
+  fontsize(part = "header", size = 12) %>%
+  fontsize(part = "body", size = 11) %>%
+  autofit() %>%
+  theme_box()
+
+```
+
+<br>
+
+### Tabla.2 Características basales
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+
+dft <- df1 %>% filter(visita == "V-2", minutos == "0'") %>% 
+  gather(11:length(.), key = "Variable", value = "value") %>%
+  mutate(value = cleanum(value)) %>% 
+  group_by(grupo_intervencion, Variable) %>% 
+  summarise(media = mean(value, na.rm = T) %>% round(2)) %>% 
+  filter(Variable %in% c("apob_mgdl", "colesterolhdl_mgdl", "colesterolldl_mgdl", 
+"colesteroltotal_mgdl", "creatinina_s_mgdl", "glucosa_ayuno_mgdl", "hba1c_porcentaje", 
+"insulina_uil", "ma_mg24h", "tfg_mlmin_epi", "trigliceridos_mgdl"))
+
+
+dft <- left_join(dft,df1 %>% filter(visita == "V-2", minutos == "0'") %>% 
+  gather(11:length(.), key = "Variable", value = "value") %>%
+  mutate(value = cleanum(value)) %>% 
+  group_by(grupo_intervencion, Variable) %>% 
+  summarise(sd = sd(value, na.rm = T) %>% round(2)) %>% 
+  filter(Variable %in% c("apob_mgdl", "colesterolhdl_mgdl", "colesterolldl_mgdl", 
+"colesteroltotal_mgdl", "creatinina_s_mgdl", "glucosa_ayuno_mgdl", "hba1c_porcentaje", 
+"insulina_uil", "ma_mg24h", "tfg_mlmin_epi", "trigliceridos_mgdl")))
+
+dft <- left_join(dft,df1 %>% filter(visita == "V-2", minutos == "0'") %>% 
+  gather(11:length(.), key = "Variable", value = "value") %>%
+  mutate(value = cleanum(value)) %>% 
+  group_by(grupo_intervencion, Variable) %>% 
+  summarise(median = median(value, na.rm = T) %>% round(2)) %>% 
+  filter(Variable %in% c("apob_mgdl", "colesterolhdl_mgdl", "colesterolldl_mgdl", 
+"colesteroltotal_mgdl", "creatinina_s_mgdl", "glucosa_ayuno_mgdl", "hba1c_porcentaje", 
+"insulina_uil", "ma_mg24h", "tfg_mlmin_epi", "trigliceridos_mgdl")))
+
+dft <- left_join(dft,df1 %>% filter(visita == "V-2", minutos == "0'") %>% 
+  gather(11:length(.), key = "Variable", value = "value") %>%
+  mutate(value = cleanum(value)) %>% 
+  group_by(grupo_intervencion, Variable) %>% 
+  summarise(q25 = quantile(value,.25, na.rm = T, type = 6) %>% round(2)) %>% 
+  filter(Variable %in% c("apob_mgdl", "colesterolhdl_mgdl", "colesterolldl_mgdl", 
+"colesteroltotal_mgdl", "creatinina_s_mgdl", "glucosa_ayuno_mgdl", "hba1c_porcentaje", 
+"insulina_uil", "ma_mg24h", "tfg_mlmin_epi", "trigliceridos_mgdl")))
+
+dft <- left_join(dft,df1 %>% filter(visita == "V-2", minutos == "0'") %>% 
+  gather(11:length(.), key = "Variable", value = "value") %>%
+  mutate(value = cleanum(value)) %>% 
+  group_by(grupo_intervencion, Variable) %>% 
+  summarise(q75 = quantile(value,.75, na.rm = T, type = 6) %>% round(2)) %>% 
+  filter(Variable %in% c("apob_mgdl", "colesterolhdl_mgdl", "colesterolldl_mgdl", 
+"colesteroltotal_mgdl", "creatinina_s_mgdl", "glucosa_ayuno_mgdl", "hba1c_porcentaje", 
+"insulina_uil", "ma_mg24h", "tfg_mlmin_epi", "trigliceridos_mgdl")))
+
+
+dft %<>% mutate(value = paste0(media," ± ",sd,"\n",median," [",q25," - ",q75,"]")) %>% 
+  dplyr::select(c('grupo_intervencion', "value", "Variable")) %>% 
+  spread(key = 'grupo_intervencion', value = "value")
+
+flextable(dft) %>%
+  font(fontname = "calibri", part = "all") %>% 
+  fontsize(part = "header", size = 12) %>%
+  fontsize(part = "body", size = 11) %>%
+  autofit() %>%
+  theme_box()
+
+```
+
+### Cálculo de deltas (medias)
+
+### Tabla de valores por grupo y deltas
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+
+
+dft <- df1 %>% filter(visita %in% c("V-2"), minutos == "0'") %>% 
+  gather(11:length(.), key = "Variable", value = "value") %>%
+  mutate(value = cleanum(value)) %>% 
+  filter(!Variable %in% c("ma_mg24h","insulina_uil")) %>% 
+  group_by(grupo_intervencion, Variable) %>% 
+  summarise(media2 = mean(value, na.rm = T) %>% round(2)) %>% 
+  filter(Variable %in% c("apob_mgdl", "colesterolhdl_mgdl", "colesterolldl_mgdl", 
+"colesteroltotal_mgdl", "creatinina_s_mgdl", "glucosa_ayuno_mgdl", "hba1c_porcentaje", 
+"insulina_uil", "ma_mg24h", "tfg_mlmin_epi", "trigliceridos_mgdl"))
+
+dft <- left_join(dft,df1 %>% filter(visita %in% c("V-8"), minutos == "0'") %>% 
+  gather(11:length(.), key = "Variable", value = "value") %>%
+  mutate(value = cleanum(value)) %>% 
+  filter(!Variable %in% c("ma_mg24h","insulina_uil")) %>%
+  group_by(grupo_intervencion, Variable) %>% 
+  summarise(media8 = mean(value, na.rm = T) %>% round(2)) %>% 
+  filter(Variable %in% c("apob_mgdl", "colesterolhdl_mgdl", "colesterolldl_mgdl", 
+"colesteroltotal_mgdl", "creatinina_s_mgdl", "glucosa_ayuno_mgdl", "hba1c_porcentaje", 
+"insulina_uil", "ma_mg24h", "tfg_mlmin_epi", "trigliceridos_mgdl")))
+
+dft %<>% mutate(value = media8-media2)
+
+
+flextable(dft) %>%
+  font(fontname = "calibri", part = "all") %>% 
+  fontsize(part = "header", size = 12) %>%
+  fontsize(part = "body", size = 11) %>%
+  autofit() %>%
+  theme_box()
+
+```
+
+<br>
+
+#### Tabla de deltas
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+dft %<>% 
+  dplyr::select(c('grupo_intervencion', "value", "Variable")) %>% 
+  spread(key = 'grupo_intervencion', value = "value")
+
+
+flextable(dft) %>%
+  font(fontname = "calibri", part = "all") %>% 
+  fontsize(part = "header", size = 12) %>%
+  fontsize(part = "body", size = 11) %>%
+  autofit() %>%
+  theme_box()
+```
+
+<br>
+
+### Cálculo de deltas (medianas)
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+
+dft <- df1 %>% filter(visita %in% c("V-2"), minutos == "0'") %>% 
+  gather(11:length(.), key = "Variable", value = "value") %>%
+  mutate(value = cleanum(value)) %>% 
+  filter(Variable %in% c("ma_mg24h","insulina_uil")) %>% 
+  group_by(grupo_intervencion, Variable) %>% 
+  summarise(media2 = median(value, na.rm = T) %>% round(2)) %>% 
+  filter(Variable %in% c("apob_mgdl", "colesterolhdl_mgdl", "colesterolldl_mgdl", 
+"colesteroltotal_mgdl", "creatinina_s_mgdl", "glucosa_ayuno_mgdl", "hba1c_porcentaje", 
+"insulina_uil", "ma_mg24h", "tfg_mlmin_epi", "trigliceridos_mgdl"))
+
+dft <- left_join(dft,df1 %>% filter(visita %in% c("V-8"), minutos == "0'") %>% 
+  gather(11:length(.), key = "Variable", value = "value") %>%
+  mutate(value = cleanum(value)) %>% 
+  filter(Variable %in% c("ma_mg24h","insulina_uil")) %>%
+  group_by(grupo_intervencion, Variable) %>% 
+  summarise(media8 = median(value, na.rm = T) %>% round(2)) %>% 
+  filter(Variable %in% c("apob_mgdl", "colesterolhdl_mgdl", "colesterolldl_mgdl", 
+"colesteroltotal_mgdl", "creatinina_s_mgdl", "glucosa_ayuno_mgdl", "hba1c_porcentaje", 
+"insulina_uil", "ma_mg24h", "tfg_mlmin_epi", "trigliceridos_mgdl")))
+
+dft %<>% mutate(value = media8-media2) %>% 
+  dplyr::select(c('grupo_intervencion', "value", "Variable")) %>% 
+  spread(key = 'grupo_intervencion', value = "value")
+
+
+flextable(dft) %>%
+  font(fontname = "calibri", part = "all") %>% 
+  fontsize(part = "header", size = 12) %>%
+  fontsize(part = "body", size = 11) %>%
+  autofit() %>%
+  theme_box()
+
+```
+
+<br>
+
+### Gráficas de medias
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+
+dfv <- read.csv("C:/Users/IOR_C/Downloads/nombresvar.csv")
+
+dft <- df1 %>% filter(minutos == "0'") %>% 
+  gather(11:length(.), key = "Variable", value = "value") %>%
+  mutate(value = cleanum(value)) %>% 
+  group_by(grupo_intervencion, Variable, visita) %>% 
+  summarise(media = mean(value, na.rm = T) %>% round(2)) %>% 
+  filter(Variable %in% c("colesterolhdl_mgdl", "colesterolldl_mgdl", 
+"colesteroltotal_mgdl", "creatinina_s_mgdl", "glucosa_ayuno_mgdl", 
+"insulina_uil", "ma_mg24h", "tfg_mlmin_epi", "trigliceridos_mgdl", 'hba1c_porcentaje')) %>% 
+  ungroup() %>% 
+  mutate(media = na_if(media,"NaN"),
+         Variable = dfv$Nombres[match(Variable, dfv$Variables)])
+
+```
+
+
+```{r, fig.width=10, fig.height=6, warning=FALSE, message=FALSE}
+
+for (i in unique(dft$grupo_intervencion)){
+  for(n in unique(dft$Variable) %>% as.character()){
+    
+    dft1 <- filter(dft, grupo_intervencion == i, 
+               Variable == n)
+
+ggp <- ggplot(dft1, aes(y=media, x=visita))+
+  geom_line(aes(color=Variable, group = Variable))+
+  geom_point(aes(color=Variable, group = Variable))+
+  geom_text(aes(y=media, label = format(media, big.mark = ",", scientific = FALSE)), size = 3.5,
+                vjust = -1.5, hjust = "inward", check_overlap = TRUE, fontface="bold", color = "#333333")+
+  theme_classic()+
+  labs(title = paste0("Evolución de ",n," durante el protocolo (grupo ",i,")"),
+       y=n,
+       x="Número de visita")+
+  theme(axis.text.x = element_text(size=7.5),
+        axis.title.x = element_text(size=9, face = "bold", 
+                                    margin = margin(t=0.5,unit = "cm"), color = "#666666"),
+        axis.title.y = element_text(size=9, face = "bold",color = "#666666"),
+        plot.caption = element_text(hjust = 0),
+        plot.title = element_text(vjust=-2.5, size = 13.5, hjust = 0.5, 
+                                  color = "#666666", face = "bold", 
+                                  margin = margin(b=1, unit = "cm")),
+        plot.subtitle = element_text(vjust=-2.5, size = 10, hjust = 0.5, color = "#666666", face = "italic",
+                                     margin = margin(b=1, unit = "cm")),
+        strip.background = element_blank(),
+        legend.position = "none")+
+  scale_y_continuous(limits = c(min(dft1$media)-min(dft1$media)*0.1,max(dft1$media)+max(dft1$media)*0.10))+
+  scale_color_manual(values = c("black"))
+
+ggsave(paste0(str_remove(n,"/"),"_grupo_",i,".jpeg"), plot = ggp,
+           path = "C:/Users/IOR_C/Documents/GitHub/personal/foreign_proyects/v_analisis/Imagen",
+           dpi = 320, device = "jpeg", width = 26, height = 17, units = "cm", bg = "white")
+
+print(ggp)
+}}
+
+
+
+```

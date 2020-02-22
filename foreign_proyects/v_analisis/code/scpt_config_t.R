@@ -10,6 +10,9 @@ library(normtest)
 library(nortest)
 library(moments)
 library(fifer)
+library(xlsx)
+library(readxl)
+library(janitor)
 
 
 #Función para construir tabla
@@ -273,7 +276,7 @@ chisqtable <- function(df,x){
 
 
 cleanum <- function(ttt){
-  as.numeric(gsub('[^0-9\\.]', '', ttt))
+  as.numeric(gsub('[^0-9\\.]', '', ttt) %>% str_squish())
 }
 
 # Error estándar

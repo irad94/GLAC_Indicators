@@ -6,7 +6,7 @@ output:
 date: "`r format(Sys.Date(), '%A, %B %d, %Y')`"
 ---
 
-```{r config, message=FALSE, warning=FALSE, code=readLines('C:/Users/IOR_C/Documents/GitHub/GLAC_Indicators/foreign_proyects/v_analisis/code/scpt_config_t.R'), include=FALSE}
+```{r config, message=FALSE, warning=FALSE, code=readLines('C:/Users/IOR_C/Documents/GitHub/personal/foreign_proyects/v_analisis/code/scpt_config_t.R'), include=FALSE}
 
 ```
 
